@@ -26,7 +26,14 @@ class MoviesActivity : AppCompatActivity(), CoroutineScope {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_movies)
         initUI()
-        launch { fetchData() }
+        launch {
+            val response = fetchData()
+            if (response == null) {
+                Toast.makeText(this@MoviesActivity, "Unable to get data", Toast.LENGTH_SHORT).show()
+            } else {
+                adapter.data = response
+            }
+        }
     }
 
     private fun initUI() {
@@ -38,20 +45,10 @@ class MoviesActivity : AppCompatActivity(), CoroutineScope {
     private suspend fun fetchData() = withContext(Dispatchers.IO) {
         try {
             val response = moviesApi.getPopular(Constants.MOVIESDB_API_KEY).execute()
-            withContext(Dispatchers.Main) {
-                response.body()?.results?.let { adapter.data = it }
-            }
+            response.body()?.results
         } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    this@MoviesActivity,
-                    "Unable to get movies",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
             e.printStackTrace()
-
-
+            null
         }
     }
 
