@@ -26,14 +26,7 @@ class MoviesActivity : AppCompatActivity(), CoroutineScope {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_movies)
         initUI()
-        launch {
-            val response = fetchData()
-            if (response == null) {
-                Toast.makeText(this@MoviesActivity, "Unable to get data", Toast.LENGTH_SHORT).show()
-            } else {
-                adapter.data = response
-            }
-        }
+        fetchData()
     }
 
     private fun initUI() {
@@ -42,7 +35,19 @@ class MoviesActivity : AppCompatActivity(), CoroutineScope {
         list.layoutManager = LinearLayoutManager(this)
     }
 
-    private suspend fun fetchData() = withContext(Dispatchers.IO) {
+    private fun fetchData() {
+        launch {
+            val response = getMovies()
+            if (response == null) {
+                Toast.makeText(this@MoviesActivity, "Unable to get data", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@MoviesActivity, "Get data successful", Toast.LENGTH_SHORT).show()
+                adapter.data = response
+            }
+        }
+    }
+
+    private suspend fun getMovies() = withContext(Dispatchers.IO) {
         try {
             val response = moviesApi.getPopular(Constants.MOVIESDB_API_KEY).execute()
             response.body()?.results
@@ -52,8 +57,15 @@ class MoviesActivity : AppCompatActivity(), CoroutineScope {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            fetchData()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
         parentJob.cancelChildren()
     }
 
