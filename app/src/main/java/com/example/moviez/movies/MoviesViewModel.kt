@@ -1,8 +1,7 @@
 package com.example.moviez.movies
 
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.moviez.Constants
 import com.example.moviez.data.AppDatabase
 import com.example.moviez.data.movies.MovieCache
@@ -12,35 +11,45 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MoviesViewModel : ViewModel() {
-    lateinit var db: AppDatabase // todo use dependency injection
+class MoviesViewModel(db: AppDatabase) : ViewModel() {
     private val movieCache: MovieCache by lazy { MovieCache(db) }
 
-    val movies = MutableLiveData<List<Movie>>(listOf())
-    val isCached = MutableLiveData<Boolean>(false)
+    val movies = MutableLiveData(listOf<Movie>())
+    val isFetching = MutableLiveData(false)
+    val isCached = MutableLiveData(false)
 
     private val moviesApi by lazy { MoviesApiService.create() }
 
     fun fetchMovies() {
         viewModelScope.launch {
+            movies.value = getCachedMovies()
             val moviesList = getMovies()
             moviesList?.let { movies.value = it }
         }
     }
 
+    private suspend fun getCachedMovies() = withContext(Dispatchers.IO) {
+        movieCache.getCache()
+    }
+
     private suspend fun getMovies() = withContext(Dispatchers.IO) {
-        val cachedMovies = movieCache.getCache()
         try {
+            setFetching(true)
             val response = moviesApi.getPopular(Constants.MOVIESDB_API_KEY)
             val movies = response.results
             movieCache.setCache(movies)
             setCached(false)
+            setFetching(false)
             movies
         } catch (e: Exception) {
             e.printStackTrace()
-            setCached(true)
-            cachedMovies.ifEmpty { null }
+            setFetching(false)
+            null
         }
+    }
+
+    private suspend fun setFetching(flag: Boolean) = withContext(Dispatchers.Main) {
+        isFetching.value = flag
     }
 
     private suspend fun setCached(flag: Boolean) = withContext(Dispatchers.Main) {
@@ -49,5 +58,18 @@ class MoviesViewModel : ViewModel() {
 
     companion object {
         const val TAG = "MoviesViewModel"
+
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                modelClass: Class<T>, extras: CreationExtras
+            ): T {
+                val application = checkNotNull(
+                    extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
+                )
+                val db = AppDatabase.createDb(application)
+                return MoviesViewModel(db) as T
+            }
+        }
     }
 }
