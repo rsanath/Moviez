@@ -1,6 +1,5 @@
 package com.example.moviez.data
 
-import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
@@ -8,7 +7,7 @@ import retrofit2.http.Query
 
 interface MoviesApiService {
     @GET("/3/movie/popular")
-    fun getPopular(@Query("api_key") apiKey: String): Call<MoviesResponse>
+    suspend fun getPopular(@Query("api_key") apiKey: String): MoviesResponse
 
     companion object {
         fun create(): MoviesApiService {

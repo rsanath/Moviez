@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace 'com.example.moviez'
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.example.moviez"
@@ -32,6 +32,9 @@ android {
     }
 }
 
+def lifecycle_version = '2.2.0'
+def activity_version = '1.6.1'
+
 dependencies {
 
     implementation 'androidx.core:core-ktx:1.7.0'
@@ -47,7 +50,12 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
 
-    implementation("com.github.bumptech.glide:glide:4.14.2")
+    implementation "com.github.bumptech.glide:glide:4.14.2"
 
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.3'
+
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
+    implementation "androidx.activity:activity-ktx:$activity_version"
+    implementation "androidx.activity:activity-compose:$activity_version"
 }
