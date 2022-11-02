@@ -9,7 +9,6 @@ import com.example.moviez.models.Movie
 import kotlinx.coroutines.*
 
 class MoviesViewModel : ViewModel() {
-    private val parentJob = SupervisorJob()
     val movies = MutableLiveData<List<Movie>>(listOf())
 
     private val moviesApi by lazy { MoviesApiService.create() }
@@ -31,8 +30,4 @@ class MoviesViewModel : ViewModel() {
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        parentJob.cancelChildren()
-    }
 }
