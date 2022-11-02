@@ -1,4 +1,4 @@
-package com.example.moviez.data
+package com.example.moviez.data.movies
 
 import com.example.moviez.models.Movie
 

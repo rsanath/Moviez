@@ -4,13 +4,20 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.moviez.Constants
-import com.example.moviez.data.MoviesApiService
+import com.example.moviez.data.AppDatabase
+import com.example.moviez.data.movies.MovieCache
+import com.example.moviez.data.movies.MoviesApiService
 import com.example.moviez.models.Movie
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MoviesViewModel : ViewModel() {
-    private val parentJob = SupervisorJob()
+    lateinit var db: AppDatabase // todo use dependency injection
+    private val movieCache: MovieCache by lazy { MovieCache(db) }
+
     val movies = MutableLiveData<List<Movie>>(listOf())
+    val isCached = MutableLiveData<Boolean>(false)
 
     private val moviesApi by lazy { MoviesApiService.create() }
 
@@ -22,17 +29,25 @@ class MoviesViewModel : ViewModel() {
     }
 
     private suspend fun getMovies() = withContext(Dispatchers.IO) {
+        val cachedMovies = movieCache.getCache()
         try {
             val response = moviesApi.getPopular(Constants.MOVIESDB_API_KEY)
-            response.results
+            val movies = response.results
+            movieCache.setCache(movies)
+            setCached(false)
+            movies
         } catch (e: Exception) {
-            e.printStackTrace() // todo send cache
-            null
+            e.printStackTrace()
+            setCached(true)
+            cachedMovies.ifEmpty { null }
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        parentJob.cancelChildren()
+    private suspend fun setCached(flag: Boolean) = withContext(Dispatchers.Main) {
+        isCached.value = flag
+    }
+
+    companion object {
+        const val TAG = "MoviesViewModel"
     }
 }

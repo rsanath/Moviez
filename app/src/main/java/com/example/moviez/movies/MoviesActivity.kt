@@ -5,6 +5,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.moviez.MoviezApplication
 import com.example.moviez.R
 
 class MoviesActivity : AppCompatActivity() {
@@ -25,8 +26,13 @@ class MoviesActivity : AppCompatActivity() {
     }
 
     private fun initViewModel() {
+        viewModel.db = (application as MoviezApplication).db
         viewModel.movies.observe(this) {
             adapter.data = it
+        }
+        viewModel.isCached.observe(this) {
+            val appName = getString(R.string.app_name)
+            this.title = appName + if (it) " (cached)" else ""
         }
     }
 
