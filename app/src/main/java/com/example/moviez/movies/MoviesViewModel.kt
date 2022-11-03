@@ -22,7 +22,9 @@ class MoviesViewModel(db: AppDatabase) : ViewModel() {
 
     fun fetchMovies() {
         viewModelScope.launch {
-            movies.value = getCachedMovies()
+            if (movies.value!!.isEmpty()) {
+                movies.value = getCachedMovies()
+            }
             val moviesList = getMovies()
             moviesList?.let { movies.value = it }
         }
